@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop MQA — Relatório de Campanha</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #f7f7f4;
+  color: #1a1a1a;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 44px 36px 80px;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid #1a1a1a;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.header .sub { font-size: 13px; color: #666; margin-bottom: 10px; }
+
+.tag {
+  display: inline-block;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+.tag.green  { background: #166534; }
+.tag.blue   { background: #1e40af; }
+.tag.orange { background: #92400e; }
+
+.header-right { text-align: right; }
+.header-right .periodo { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.header-right .gen     { font-size: 12px; color: #999; }
+
+/* ── SECTION TITLE ── */
+.st {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #999;
+  margin: 40px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.st::after { content: ''; flex: 1; height: 1px; background: #e4e4e4; }
+
+/* ── CARDS ── */
+.card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+}
+
+/* ── KPI GRID ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+
+.kpi { padding: 20px 18px; }
+.kpi-label { font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.025em; line-height: 1; margin-bottom: 5px; }
+.kpi-sub   { font-size: 11px; color: #888; }
+
+.c-red    { color: #c93030; }
+.c-green  { color: #166534; }
+.c-orange { color: #c2600a; }
+.c-blue   { color: #1d4ed8; }
+.c-gray   { color: #555; }
+
+/* ── CPV BLOCK ── */
+.cpv-block { padding: 24px; margin-top: 10px; }
+.cpv-block h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.cpv-block .desc { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+.cpv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.cpv-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.cpv-card.ok { border-color: #16a34a; background: #f0fdf4; }
+
+.cpv-ico {
+  width: 46px; height: 46px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.bg-orange { background: #fff7ed; }
+.bg-green  { background: #f0fdf4; }
+
+.cpv-info { flex: 1; }
+.cpv-name  { font-size: 11px; color: #666; margin-bottom: 4px; line-height: 1.4; }
+.cpv-val   { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1; margin-bottom: 4px; }
+.cpv-det   { font-size: 11px; color: #999; }
+
+.badge-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.pill-warn  { background: #fff3cd; color: #7c4f00; }
+.pill-ok    { background: #dcfce7; color: #15572a; }
+
+.meta-line {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.meta-tag {
+  background: #1a1a1a; color: #fff;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+}
+
+/* ── AD TABLE ── */
+.table-head-bar {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.table-head-bar h3 { font-size: 14px; font-weight: 600; }
+.note { font-size: 11px; color: #999; background: #f5f5f0; padding: 4px 10px; border-radius: 20px; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 10px 18px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: #888; text-align: left;
+  background: #fafafa; border-bottom: 1px solid #f0f0f0;
+}
+tbody td {
+  padding: 14px 18px; font-size: 13px;
+  border-bottom: 1px solid #f5f5f5; vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafafa; }
+
+.ad-name { font-weight: 600; }
+.ad-sub  { font-size: 11px; color: #999; margin-top: 2px; }
+
+.fbadge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.fbadge-v { background: #ede9fe; color: #5b21b6; }
+.fbadge-e { background: #f3f4f6; color: #6b7280; }
+
+.sbadge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+}
+.sb-top  { background: #dcfce7; color: #15572a; }
+.sb-ok   { background: #fef9c3; color: #713f12; }
+.sb-bad  { background: #fee2e2; color: #991b1b; }
+.sb-zero { background: #f3f4f6; color: #6b7280; }
+
+/* ── FUNIL ── */
+.funil-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 0; }
+.funil-step {
+  padding: 20px 16px;
+  text-align: center;
+  border-right: 1px solid #f0f0f0;
+  position: relative;
+}
+.funil-step:last-child { border-right: none; }
+.funil-num  { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.funil-lbl  { font-size: 11px; color: #888; margin-bottom: 6px; }
+.funil-rate { font-size: 12px; font-weight: 600; }
+.funil-arrow {
+  position: absolute; right: -10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px; color: #ccc; z-index: 1;
+}
+
+/* ── CHARTS ── */
+.chart-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; }
+.chart-card { padding: 22px; }
+.chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.chart-card .desc { font-size: 12px; color: #888; margin-bottom: 18px; }
+
+/* ── PLACEMENTS ── */
+.pl-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.pl-name  { width: 155px; font-size: 12px; color: #555; flex-shrink: 0; }
+.pl-wrap  { flex: 1; height: 6px; background: #f0f0f0; border-radius: 3px; }
+.pl-bar   { height: 100%; border-radius: 3px; }
+.pl-count { width: 22px; text-align: right; font-size: 12px; font-weight: 600; }
+
+/* ── COMPRADORES TABLE ── */
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ── STATES ── */
+.state-wrap { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 22px; }
+.state-tag {
+  background: #f5f5f0; border: 1px solid #e0e0e0;
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.state-n {
+  background: #1a1a1a; color: #fff;
+  font-size: 10px; font-weight: 700;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── ALERT BOX ── */
+.alert-box {
+  border-radius: 8px; padding: 14px 18px;
+  font-size: 13px; line-height: 1.6; margin-top: 10px;
+}
+.alert-yellow { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; }
+.alert-blue   { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; }
+
+/* ── INSIGHTS ── */
+.insights-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.insight { padding: 20px; }
+.insight-ico   { font-size: 24px; margin-bottom: 10px; }
+.insight-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.insight-body  { font-size: 12px; color: #666; line-height: 1.65; }
+
+/* ── FOOTER ── */
+.footer {
+  margin-top: 50px; padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: #aaa;
+}
+
+@media (max-width: 800px) {
+  .kpi-grid    { grid-template-columns: repeat(2,1fr); }
+  .cpv-row     { grid-template-columns: 1fr; }
+  .chart-grid  { grid-template-columns: 1fr; }
+  .comp-grid   { grid-template-columns: 1fr; }
+  .insights-grid { grid-template-columns: 1fr; }
+  .funil-grid  { grid-template-columns: repeat(3,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div>
+    <h1>Workshop MQA — Mai/26</h1>
+    <div class="sub">Milhas que Aposentam · Relatório completo de tráfego pago</div>
+    <span class="tag">Meta Ads</span>
+    <span class="tag green">Campanha ativa</span>
+    <span class="tag blue">01–27 Abr 2026</span>
+  </div>
+  <div class="header-right">
+    <div class="periodo">01 Abr → 27 Abr 2026</div>
+    <div class="gen">Gerado em 27/04/2026 · Arco Mídias</div>
+  </div>
+</div>
+
+<!-- ── KPIs ── -->
+<div class="st">Números gerais</div>
+<div class="kpi-grid">
+  <div class="card kpi">
+    <div class="kpi-label">Gasto total</div>
+    <div class="kpi-value c-orange">R$1.069</div>
+    <div class="kpi-sub">8 criativos ativos</div>
+  </div>
+  <div class="card kpi">
+    <div class="kpi-label">Impressões</div>
+    <div class="kpi-value c-gray">15.822</div>
+    <div class="kpi-sub">Frequência média: 2,1×</div>
+  </div>
+  <div class="card kpi">
+    <div class="kpi-label">Cliques no link</div>
+    <div class="kpi-value c-gray">315</div>
+    <div class="kpi-sub">CTR médio: 1,99%</div>
+  </div>
+  <div class="card kpi">
+    <div class="kpi-label">Checkouts iniciados</div>
+    <div class="kpi-value c-blue">40</div>
+    <div class="kpi-sub">Taxa clique→checkout: 12,7%</div>
+  </div>
+  <div class="card kpi">
+    <div class="kpi-label">Pedidos gerados</div>
+    <div class="kpi-value c-green">17</div>
+    <div class="kpi-sub">Aprovados: 9 · Completos: 5 · Aguard: 3</div>
+  </div>
+</div>
+
+<!-- ── FUNIL ── -->
+<div class="st">Funil completo</div>
+<div class="card funil-grid">
+  <div class="funil-step">
+    <div class="funil-num">15.822</div>
+    <div class="funil-lbl">Impressões</div>
+    <div class="funil-rate" style="color:#999;">—</div>
+    <div class="funil-arrow">›</div>
+  </div>
+  <div class="funil-step">
+    <div class="funil-num">315</div>
+    <div class="funil-lbl">Cliques</div>
+    <div class="funil-rate c-blue">CTR 1,99%</div>
+    <div class="funil-arrow">›</div>
+  </div>
+  <div class="funil-step">
+    <div class="funil-num">40</div>
+    <div class="funil-lbl">Checkouts</div>
+    <div class="funil-rate c-blue">12,7% dos cliques</div>
+    <div class="funil-arrow">›</div>
+  </div>
+  <div class="funil-step">
+    <div class="funil-num">17</div>
+    <div class="funil-lbl">Pedidos</div>
+    <div class="funil-rate c-orange">42,5% dos checkouts</div>
+    <div class="funil-arrow">›</div>
+  </div>
+  <div class="funil-step">
+    <div class="funil-num">14</div>
+    <div class="funil-lbl">Pagos</div>
+    <div class="funil-rate c-green">82% dos pedidos</div>
+  </div>
+</div>
+
+<!-- ── CPV ── -->
+<div class="st">Custo por venda</div>
+<div class="card cpv-block">
+  <h3>Quanto custou cada venda?</h3>
+  <div class="desc">Meta definida pelo estrategista: R$60,00 por venda</div>
+  <div class="cpv-row">
+
+    <div class="cpv-card">
+      <div class="cpv-ico bg-orange">✅</div>
+      <div class="cpv-info">
+        <div class="cpv-name">Pedidos pagos e confirmados<br>(9 aprovados + 5 completos = 14 pedidos)</div>
+        <div class="cpv-val c-orange">R$76,35</div>
+        <div class="cpv-det">R$1.069 ÷ 14 pedidos pagos</div>
+      </div>
+      <div><span class="badge-pill pill-warn">27% acima da meta</span></div>
+    </div>
+
+    <div class="cpv-card ok">
+      <div class="cpv-ico bg-green">🎯</div>
+      <div class="cpv-info">
+        <div class="cpv-name">Todos os pedidos incluindo<br>3 que ainda estão aguardando pagamento</div>
+        <div class="cpv-val c-green">R$62,87</div>
+        <div class="cpv-det">R$1.069 ÷ 17 pedidos</div>
+      </div>
+      <div><span class="badge-pill pill-ok">Quase na meta ✓</span></div>
+    </div>
+
+  </div>
+  <div class="meta-line">
+    <span>Meta do estrategista:</span>
+    <span class="meta-tag">R$60,00 por venda</span>
+    <span style="color:#888;">— Se os 3 pedidos aguardando confirmarem, faltam apenas <strong>R$2,87</strong> para bater a meta.</span>
+  </div>
+</div>
+
+<!-- ── AD TABLE ── -->
+<div class="st">Todos os criativos</div>
+<div class="card">
+  <div class="table-head-bar">
+    <h3>Performance por anúncio</h3>
+    <span class="note">Vídeos converteram · Estáticos: zero vendas</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Criativo</th>
+        <th>Formato</th>
+        <th>Gasto</th>
+        <th>Impressões</th>
+        <th>Cliques</th>
+        <th>CTR</th>
+        <th>Checkouts</th>
+        <th>Compradores</th>
+        <th>Custo/venda</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="ad-name">AD03 — Quem entende de milhas</div>
+          <div class="ad-sub">Público quente · Stories / Reels / Feed</div>
+        </td>
+        <td><span class="fbadge fbadge-v">Vídeo</span></td>
+        <td>R$273</td>
+        <td>5.603</td>
+        <td>109</td>
+        <td class="c-green">1,94%</td>
+        <td>8</td>
+        <td class="c-green"><strong>6</strong></td>
+        <td class="c-green"><strong>R$45,50</strong></td>
+        <td><span class="sbadge sb-top">✦ Top criativo</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="ad-name">AD01 — Barato costuma ser ignorado</div>
+          <div class="ad-sub">Público quente e frio · Stories / Reels / Feed</div>
+        </td>
+        <td><span class="fbadge fbadge-v">Vídeo</span></td>
+        <td>R$360</td>
+        <td>4.305</td>
+        <td>89</td>
+        <td>2,07%</td>
+        <td>14</td>
+        <td class="c-green"><strong>5</strong></td>
+        <td class="c-orange"><strong>R$72,10</strong></td>
+        <td><span class="sbadge sb-ok">Acima da meta</span></td>
+      </tr>
+      <tr>
+        <td>
+          <div class="ad-name">AD02 — Viajar de graça é decisão</div>
+          <div class="ad-sub">Público quente · Stories / Reels / Feed</div>
+        </td>
+        <td><span class="fbadge fbadge-v">Vídeo</span></td>
+        <td>R$136</td>
+        <td>3.250</td>
+        <td>44</td>
+        <td>1,35%</td>
+        <td>9</td>
+        <td class="c-red"><strong>0</strong></td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-bad">Sem conversão</span></td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td>
+          <div class="ad-name">AD15 — Antes-Depois</div>
+          <div class="ad-sub">Público frio · Feed / Stories</div>
+        </td>
+        <td><span class="fbadge fbadge-e">Estático</span></td>
+        <td>R$111</td>
+        <td>1.225</td>
+        <td>23</td>
+        <td>1,88%</td>
+        <td>1</td>
+        <td class="c-red">0</td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-zero">Sem conversão</span></td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td>
+          <div class="ad-name">AD13 — Milha parada não é estratégia</div>
+          <div class="ad-sub">Público frio · Feed / Stories</div>
+        </td>
+        <td><span class="fbadge fbadge-e">Estático</span></td>
+        <td>R$72</td>
+        <td>1.280</td>
+        <td>30</td>
+        <td>2,34%</td>
+        <td>2</td>
+        <td class="c-red">0</td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-zero">Sem conversão</span></td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td>
+          <div class="ad-name">AD14 — Milhas não são o problema</div>
+          <div class="ad-sub">Público quente · Stories / Feed</div>
+        </td>
+        <td><span class="fbadge fbadge-e">Estático</span></td>
+        <td>R$71</td>
+        <td>710</td>
+        <td>9</td>
+        <td>1,27%</td>
+        <td>5</td>
+        <td class="c-red">0</td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-zero">Sem conversão</span></td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td>
+          <div class="ad-name">AD17 — Eu não ensino milhas</div>
+          <div class="ad-sub">Público quente · Stories</div>
+        </td>
+        <td><span class="fbadge fbadge-e">Estático</span></td>
+        <td>R$31</td>
+        <td>556</td>
+        <td>9</td>
+        <td>1,62%</td>
+        <td>1</td>
+        <td class="c-red">0</td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-zero">Sem conversão</span></td>
+      </tr>
+      <tr style="opacity:0.6;">
+        <td>
+          <div class="ad-name">AD16 — Você não precisa ganhar mais</div>
+          <div class="ad-sub">Público quente · Stories / Feed</div>
+        </td>
+        <td><span class="fbadge fbadge-e">Estático</span></td>
+        <td>R$14</td>
+        <td>103</td>
+        <td>2</td>
+        <td>1,94%</td>
+        <td>0</td>
+        <td class="c-red">0</td>
+        <td class="c-red">—</td>
+        <td><span class="sbadge sb-zero">Sem conversão</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="alert-box alert-yellow">
+  <strong>Estáticos somam R$299 gastos e zero vendas.</strong> Recomendação: pausar todos os estáticos e concentrar o budget em AD03 (melhor custo/venda) e AD01.
+</div>
+
+<!-- ── CHARTS ── -->
+<div class="st">Evolução diária</div>
+<div class="chart-grid">
+  <div class="card chart-card">
+    <h3>Gasto diário vs. pedidos confirmados</h3>
+    <div class="desc">Barras = investimento em R$ · Linha = pedidos gerados por dia</div>
+    <div style="position:relative; height:230px;">
+      <canvas id="dailyChart" role="img" aria-label="Gráfico de gasto diário e pedidos de 16 a 27 de abril de 2026">Gráfico de gasto e pedidos diários.</canvas>
+    </div>
+  </div>
+  <div class="card chart-card">
+    <h3>Vídeo vs. Estático</h3>
+    <div class="desc">Distribuição do gasto por formato de anúncio</div>
+    <div style="position:relative; height:160px; margin-bottom:14px;">
+      <canvas id="fmtChart" role="img" aria-label="Gráfico de pizza comparando gasto em vídeo e estático">Gráfico formato.</canvas>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f7f7f4; border-radius:8px;">
+        <span style="font-size:12px; display:flex; align-items:center; gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:#5b21b6;display:inline-block;"></span> Vídeo — R$770</span>
+        <span style="font-size:12px; font-weight:600; color:#166534;">11 compradores</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f7f7f4; border-radius:8px;">
+        <span style="font-size:12px; display:flex; align-items:center; gap:6px;"><span style="width:10px;height:10px;border-radius:2px;background:#9ca3af;display:inline-block;"></span> Estático — R$299</span>
+        <span style="font-size:12px; font-weight:600; color:#c93030;">0 compradores</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PLACEMENTS + COMPRADORES ── -->
+<div class="st">Distribuição de leads e compradores</div>
+<div class="comp-grid">
+
+  <div class="card chart-card">
+    <h3>Placements — origem dos leads</h3>
+    <div class="desc">Onde os leads foram capturados (PDF de rastreamento)</div>
+    <div class="pl-row">
+      <div class="pl-name">Instagram Stories</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:100%; background:#1d4ed8;"></div></div>
+      <div class="pl-count">14</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-name">Instagram Feed</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:71%; background:#1d4ed8;"></div></div>
+      <div class="pl-count">10</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-name">Instagram Reels</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:64%; background:#1d4ed8;"></div></div>
+      <div class="pl-count">9</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-name">Link na bio</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:21%; background:#f59e0b;"></div></div>
+      <div class="pl-count">3</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-name">Facebook</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:14%; background:#6b7280;"></div></div>
+      <div class="pl-count">2</div>
+    </div>
+    <div class="pl-row">
+      <div class="pl-name">Sem rastreio</div>
+      <div class="pl-wrap"><div class="pl-bar" style="width:28%; background:#d1d5db;"></div></div>
+      <div class="pl-count">4</div>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <h3>Compradores por estado</h3>
+    <div class="desc">Origem geográfica dos 14 pedidos pagos</div>
+    <div class="state-wrap" style="padding:0; margin-top:4px;">
+      <div class="state-tag">Minas Gerais <span class="state-n">5</span></div>
+      <div class="state-tag">Bahia <span class="state-n">2</span></div>
+      <div class="state-tag">Rio de Janeiro <span class="state-n">2</span></div>
+      <div class="state-tag">São Paulo <span class="state-n">1</span></div>
+      <div class="state-tag">Paraná <span class="state-n">1</span></div>
+      <div class="state-tag">Ceará <span class="state-n">1</span></div>
+    </div>
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #f0f0f0;">
+      <div style="font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;">Público [Q] Quentes vs [F] Frio</div>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px 14px;">
+          <div style="font-size:10px; font-weight:700; color:#15572a; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">[Q] Quentes</div>
+          <div style="font-size:22px; font-weight:700; color:#166534;">R$606</div>
+          <div style="font-size:11px; color:#888; margin-top:2px;">26 checkouts</div>
+        </div>
+        <div style="flex:1; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 14px;">
+          <div style="font-size:10px; font-weight:700; color:#7c4f00; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">[F] Frio</div>
+          <div style="font-size:22px; font-weight:700; color:#c2600a;">R$463</div>
+          <div style="font-size:11px; color:#888; margin-top:2px;">14 checkouts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── COMPRADORES ── -->
+<div class="st">Lista de compradores</div>
+<div class="card">
+  <div class="table-head-bar">
+    <h3>Todos os pedidos gerados na Hotmart</h3>
+    <span class="note">Cruzamento por e-mail com rastreamento</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Status do pedido</th>
+        <th>Estado</th>
+        <th>Criativo origem</th>
+        <th>Rastreamento UTM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Cristiana Paula</td><td><span class="sbadge sb-top">Aprovado</span></td><td>BA</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Sílvia Resende</td><td><span class="sbadge sb-top">Aprovado</span></td><td>MG</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Jor Materiais (Grupo)</td><td><span class="sbadge sb-top">Aprovado</span></td><td>MG</td><td style="font-size:12px; color:#555;">AD03 — Quem entende de milhas</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Milena Teles</td><td><span class="sbadge sb-top">Aprovado</span></td><td>CE</td><td style="font-size:12px; color:#555;">AD03 — Quem entende de milhas</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Lilian Neves</td><td><span class="sbadge sb-top">Aprovado</span></td><td>MG</td><td style="font-size:12px; color:#555;">AD03 — Quem entende de milhas</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Adriana Mattos da Silva</td><td><span class="sbadge sb-top">Aprovado</span></td><td>RJ</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Karla Schneider</td><td><span class="sbadge sb-top">Aprovado</span></td><td>PR</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Georgia Mourão Lago</td><td><span class="sbadge sb-top">Aprovado</span></td><td>MG</td><td style="font-size:12px; color:#555;">AD03 — Quem entende de milhas</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Patricia Cavalcante</td><td><span class="sbadge sb-top">Aprovado</span></td><td>BA</td><td style="font-size:12px; color:#555;">AD03 — Quem entende de milhas</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Suellen Costa</td><td><span class="sbadge sb-ok">Completo</span></td><td>MG</td><td style="font-size:12px; color:#555;">Orgânico / Link in bio</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Lucas Turquetto</td><td><span class="sbadge sb-ok">Completo</span></td><td>SP</td><td style="font-size:12px; color:#555;">Orgânico / Link in bio</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Priscila Batros Nogueira</td><td><span class="sbadge sb-ok">Completo</span></td><td>RJ</td><td style="font-size:12px; color:#555;">Orgânico / Link in bio</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Bruna Mambrini</td><td><span class="sbadge sb-ok">Completo</span></td><td>MG</td><td style="font-size:12px; color:#888; font-style:italic;">Não identificado</td><td style="color:#c93030; font-weight:600;">✗ Sem UTM</td></tr>
+      <tr><td>Ana Lúcia Parreira Acerbi</td><td><span class="sbadge sb-ok">Completo</span></td><td>—</td><td style="font-size:12px; color:#888; font-style:italic;">Não identificado</td><td style="color:#c93030; font-weight:600;">✗ Sem UTM</td></tr>
+      <tr><td>Maria Cruz</td><td><span class="sbadge" style="background:#f3f4f6; color:#6b7280;">Aguardando</span></td><td>SP</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Francisco de Assis Costa</td><td><span class="sbadge" style="background:#f3f4f6; color:#6b7280;">Aguardando</span></td><td>RJ</td><td style="font-size:12px; color:#555;">AD01 — Barato costuma ser ignorado</td><td style="color:#166534; font-weight:600;">✓ Rastreado</td></tr>
+      <tr><td>Maria Leonor TGG Soares</td><td><span class="sbadge" style="background:#f3f4f6; color:#6b7280;">Aguardando</span></td><td>—</td><td style="font-size:12px; color:#888; font-style:italic;">Não identificado</td><td style="color:#c93030; font-weight:600;">✗ Sem UTM</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── INSIGHTS ── -->
+<div class="st">Recomendações</div>
+<div class="insights-grid">
+  <div class="card insight" style="border-top: 3px solid #166534;">
+    <div class="insight-ico">🏆</div>
+    <div class="insight-title">Escalar AD03</div>
+    <div class="insight-body">Custo por venda de R$45,50 — único criativo dentro da meta de R$60. Aumentar budget e criar variações com o mesmo gancho "Quem entende de milhas".</div>
+  </div>
+  <div class="card insight" style="border-top: 3px solid #c93030;">
+    <div class="insight-ico">⛔</div>
+    <div class="insight-title">Pausar todos os estáticos</div>
+    <div class="insight-body">AD13, AD14, AD15, AD16 e AD17 somam R$299 gastos e zero compradores. Redirecionar todo esse budget para AD03.</div>
+  </div>
+  <div class="card insight" style="border-top: 3px solid #1d4ed8;">
+    <div class="insight-ico">🔧</div>
+    <div class="insight-title">Corrigir UTM no checkout</div>
+    <div class="insight-body">A Hotmart não recebe UTMs. Adicionar <code style="font-size:11px; background:#f5f5f0; padding:1px 5px; border-radius:3px;">?src=</code> e <code style="font-size:11px; background:#f5f5f0; padding:1px 5px; border-radius:3px;">sck=</code> na URL do checkout para recuperar atribuição de 100% das vendas.</div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  <span>Workshop MQA Mai/26 · Milhas que Aposentam</span>
+  <span>Arco Mídias · Meta Ads + Hotmart · 27/04/2026</span>
+</div>
+
+</div>
+
+<script>
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+new Chart(dailyCtx, {
+  data: {
+    labels: ['16/04','17/04','18/04','19/04','20/04','21/04','22/04','23/04','24/04','25/04','26/04','27/04'],
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Gasto (R$)',
+        data: [2.53,32.0,15.65,41.74,51.67,103.52,133.01,151.83,135.18,141.75,178.32,81.67],
+        backgroundColor: 'rgba(37,99,235,0.1)',
+        borderColor: 'rgba(37,99,235,0.4)',
+        borderWidth: 1, borderRadius: 4, yAxisID: 'y1',
+      },
+      {
+        type: 'line',
+        label: 'Pedidos',
+        data: [0,0,0,2,1,2,2,1,1,0,1,1],
+        borderColor: '#166534',
+        backgroundColor: 'rgba(22,101,52,0.07)',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#166534',
+        pointRadius: 5, tension: 0.3, fill: true, yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a1a1a', titleColor: '#fff', bodyColor: '#ccc',
+        callbacks: { label: ctx => ctx.dataset.label === 'Gasto (R$)' ? ` Gasto: R$${ctx.parsed.y.toFixed(2)}` : ` Pedidos: ${ctx.parsed.y}` }
+      }
+    },
+    scales: {
+      x: { grid: { color: '#f5f5f5' }, ticks: { color: '#999', font: { size: 10 } } },
+      y1: { position: 'left', grid: { color: '#f5f5f5' }, ticks: { color: '#999', font: { size: 10 }, callback: v => 'R$'+v } },
+      y2: { position: 'right', grid: { display: false }, ticks: { color: '#166534', font: { size: 10 }, stepSize: 1 }, min: 0, max: 4 }
+    }
+  }
+});
+
+const fmtCtx = document.getElementById('fmtChart').getContext('2d');
+new Chart(fmtCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Vídeo','Estático'],
+    datasets: [{
+      data: [769.70, 299.17],
+      backgroundColor: ['rgba(91,33,182,0.7)','rgba(156,163,175,0.5)'],
+      borderColor: ['rgba(91,33,182,1)','rgba(156,163,175,0.8)'],
+      borderWidth: 1,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '65%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#1a1a1a', titleColor: '#fff', bodyColor: '#ccc', callbacks: { label: ctx => ` R$${ctx.parsed.toFixed(2)}` } }
+    }
+  }
+});
+</script>
+</body>
+</html>
