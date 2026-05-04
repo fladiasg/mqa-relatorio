@@ -579,9 +579,7 @@
 /* ═══════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════ */
-const SHEET_ID = '11H87StVPhyhVmyok9wglx7Y3IVZnMDE6iRUYEUbCMVc';
-const GID = '1204199621';
-const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+const API_URL = 'https://script.google.com/macros/s/AKfycbzPFXxkQPFtyhhO-FxWvkoiBlsb1WpfsHX-kmuIf8VKrM1WNaNmAk_QHsrkz5NT9S_X/exec';
 
 const BENCHMARKS = {
   hook_rate:   { ok: 30, warn: 20 },
@@ -1094,42 +1092,23 @@ function loadData() {
   dot.className = 'status-dot loading';
   stxt.textContent = 'Atualizando…';
 
-  // Remove script anterior
-  const oldS = document.getElementById('gviz-script');
+  const oldS = document.getElementById('as-script');
   if (oldS) oldS.remove();
 
   const timer = setTimeout(() => {
     dot.className = 'status-dot err';
     stxt.textContent = 'Erro: timeout';
-    alert2('err', '✗ Timeout ao carregar dados.', 'load');
+    alert2('err', '✗ Timeout. Tente novamente.', 'load');
     $('loadingOverlay').style.display = 'none';
-  }, 20000);
+  }, 25000);
 
-  // Google Visualization Query retorna JSONP nativo sem redirecionamento
-  window.__gvizCB = function(raw) {
+  window.__asCB = function(json) {
     clearTimeout(timer);
     try {
-      const table = raw.table;
-      if (!table || !table.rows) throw new Error('Sem dados na planilha.');
-
-      // Linha 0 = cabeçalho duplicado, linha 1 = cabeçalho real
-      const cols = table.cols.map(c => c.label || '');
-
-      // Pula a primeira linha de dados se for repetição do header
-      let startRow = 0;
-      if (table.rows[0] && table.rows[0].c[0] && table.rows[0].c[0].v === cols[0]) startRow = 1;
-
-      RAW = table.rows.slice(startRow).map(row => {
-        const obj = {};
-        cols.forEach((col, i) => {
-          const cell = row.c ? row.c[i] : null;
-          obj[col] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : '') : '';
-        });
-        return mapRow(obj);
-      }).filter(r => r.ad_name || r.campaign);
-
+      if (!Array.isArray(json)) throw new Error(json.error || 'Resposta inválida.');
+      RAW = json.map(mapRow).filter(r => r.ad_name || r.campaign);
       if (!RAW.length) throw new Error('Nenhuma linha encontrada.');
-      dot.className  = 'status-dot';
+      dot.className = 'status-dot';
       stxt.textContent = RAW.length + ' linhas · ' + new Date().toLocaleString('pt-BR');
       populateFilters();
       renderAll();
@@ -1144,16 +1123,16 @@ function loadData() {
   };
 
   const s = document.createElement('script');
-  s.id  = 'gviz-script';
-  s.src = API_URL + '&tq=select+*&responseHandler=__gvizCB&t=' + Date.now();
+  s.id = 'as-script';
+  s.src = API_URL + '?callback=__asCB&t=' + Date.now();
   s.onerror = () => {
     clearTimeout(timer);
     dot.className = 'status-dot err';
-    stxt.textContent = 'Erro ao carregar';
-    alert2('err', '✗ Falha ao carregar. Verifique se a planilha está pública.', 'load');
+    stxt.textContent = 'Erro';
+    alert2('err', '✗ Erro ao carregar script.', 'load');
     $('loadingOverlay').style.display = 'none';
   };
-  document.body.appendChild(s);
+  document.head.appendChild(s);
 }
 
 /* ── FILTER LISTENERS ── */
