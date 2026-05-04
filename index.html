@@ -579,7 +579,7 @@
 /* ═══════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzPFXxkQPFtyhhO-FxWvkoiBlsb1WpfsHX-kmuIf8VKrM1WNaNmAk_QHsrkz5NT9S_X/exec';
+const API_URL = 'https://docs.google.com/spreadsheets/d/11H87StVPhyhVmyok9wglx7Y3IVZnMDE6iRUYEUbCMVc/export?format=csv&gid=1204199621';
 
 const BENCHMARKS = {
   hook_rate:   { ok: 30, warn: 20 },
@@ -1086,53 +1086,29 @@ function renderAll() {
 /* ═══════════════════════════════════════
    LOAD DATA
 ═══════════════════════════════════════ */
-function loadData() {
+async function loadData() {
   const dot  = $('statusDot');
   const stxt = $('statusText');
   dot.className = 'status-dot loading';
   stxt.textContent = 'Atualizando…';
-
-  const oldS = document.getElementById('as-script');
-  if (oldS) oldS.remove();
-
-  const timer = setTimeout(() => {
+  try {
+    const resp = await fetch(API_URL + '&t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    RAW = parseCSV(text).map(mapRow).filter(r => r.ad_name || r.campaign);
+    if (!RAW.length) throw new Error('Nenhuma linha encontrada.');
+    dot.className = 'status-dot';
+    stxt.textContent = RAW.length + ' linhas · ' + new Date().toLocaleString('pt-BR');
+    populateFilters();
+    renderAll();
+    alert2('ok', '✓ ' + RAW.length + ' registros carregados.', 'load');
+  } catch(e) {
     dot.className = 'status-dot err';
-    stxt.textContent = 'Erro: timeout';
-    alert2('err', '✗ Timeout. Tente novamente.', 'load');
+    stxt.textContent = 'Erro: ' + e.message;
+    alert2('err', '✗ Falha: ' + e.message, 'load');
+  } finally {
     $('loadingOverlay').style.display = 'none';
-  }, 25000);
-
-  window.__asCB = function(json) {
-    clearTimeout(timer);
-    try {
-      if (!Array.isArray(json)) throw new Error(json.error || 'Resposta inválida.');
-      RAW = json.map(mapRow).filter(r => r.ad_name || r.campaign);
-      if (!RAW.length) throw new Error('Nenhuma linha encontrada.');
-      dot.className = 'status-dot';
-      stxt.textContent = RAW.length + ' linhas · ' + new Date().toLocaleString('pt-BR');
-      populateFilters();
-      renderAll();
-      alert2('ok', '✓ ' + RAW.length + ' registros carregados.', 'load');
-    } catch(e) {
-      dot.className = 'status-dot err';
-      stxt.textContent = 'Erro: ' + e.message;
-      alert2('err', '✗ Falha: ' + e.message, 'load');
-    } finally {
-      $('loadingOverlay').style.display = 'none';
-    }
-  };
-
-  const s = document.createElement('script');
-  s.id = 'as-script';
-  s.src = API_URL + '?callback=__asCB&t=' + Date.now();
-  s.onerror = () => {
-    clearTimeout(timer);
-    dot.className = 'status-dot err';
-    stxt.textContent = 'Erro';
-    alert2('err', '✗ Erro ao carregar script.', 'load');
-    $('loadingOverlay').style.display = 'none';
-  };
-  document.head.appendChild(s);
+  }
 }
 
 /* ── FILTER LISTENERS ── */
