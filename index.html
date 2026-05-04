@@ -453,6 +453,14 @@
 
   <!-- TOOLBAR -->
   <div class="toolbar">
+    <label>Produto</label>
+    <select id="fProduto">
+      <option value="">Todos</option>
+      <option value="SUITE">Seguidores (Suite)</option>
+      <option value="W-MQA">Workshop MQA</option>
+      <option value="PLANILHA">Planilha</option>
+      <option value="QUIZ">Quiz</option>
+    </select>
     <label>Funil</label>
     <select id="fFunil">
       <option value="">Todos</option>
@@ -571,7 +579,9 @@
 /* ═══════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzPFXxkQPFtyhhO-FxWvkoiBlsb1WpfsHX-kmuIf8VKrM1WNaNmAk_QHsrkz5NT9S_X/exec';
+const SHEET_ID = '11H87StVPhyhVmyok9wglx7Y3IVZnMDE6iRUYEUbCMVc';
+const GID = '1204199621';
+const API_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
 
 const BENCHMARKS = {
   hook_rate:   { ok: 30, warn: 20 },
@@ -725,11 +735,13 @@ function fillSel(id, vals) {
   if(cur) sel.value = cur;
 }
 function applyFilters() {
+  const produto  = $('fProduto').value;
   const funil    = $('fFunil').value;
   const campaign = $('fCampaign').value;
   const period   = +$('fPeriod').value;
   const search   = $('searchInput').value.toLowerCase();
   let d = [...RAW];
+  if (produto)  d = d.filter(r => r.funil.includes(produto) || r.campaign.toUpperCase().includes(produto));
   if (funil)    d = d.filter(r=>r.funil === funil);
   if (campaign) d = d.filter(r=>r.campaign === campaign);
   if (period)   d = d.filter(r => {
@@ -1082,22 +1094,41 @@ function loadData() {
   dot.className = 'status-dot loading';
   stxt.textContent = 'Atualizando…';
 
-  const old = document.getElementById('jsonp-script');
-  if (old) old.remove();
+  // Remove script anterior
+  const oldS = document.getElementById('gviz-script');
+  if (oldS) oldS.remove();
 
   const timer = setTimeout(() => {
     dot.className = 'status-dot err';
     stxt.textContent = 'Erro: timeout';
-    alert2('err', '✗ Timeout. Verifique o Apps Script.', 'load');
+    alert2('err', '✗ Timeout ao carregar dados.', 'load');
     $('loadingOverlay').style.display = 'none';
-  }, 15000);
+  }, 20000);
 
-  window.__mqaCB = function(json) {
+  // Google Visualization Query retorna JSONP nativo sem redirecionamento
+  window.__gvizCB = function(raw) {
     clearTimeout(timer);
     try {
-      if (json && json.error) throw new Error(json.error);
-      RAW = json.map(mapRow).filter(r => r.ad_name || r.campaign);
-      if (!RAW.length) throw new Error('Nenhuma linha encontrada na aba Base_Dashboard.');
+      const table = raw.table;
+      if (!table || !table.rows) throw new Error('Sem dados na planilha.');
+
+      // Linha 0 = cabeçalho duplicado, linha 1 = cabeçalho real
+      const cols = table.cols.map(c => c.label || '');
+
+      // Pula a primeira linha de dados se for repetição do header
+      let startRow = 0;
+      if (table.rows[0] && table.rows[0].c[0] && table.rows[0].c[0].v === cols[0]) startRow = 1;
+
+      RAW = table.rows.slice(startRow).map(row => {
+        const obj = {};
+        cols.forEach((col, i) => {
+          const cell = row.c ? row.c[i] : null;
+          obj[col] = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : '') : '';
+        });
+        return mapRow(obj);
+      }).filter(r => r.ad_name || r.campaign);
+
+      if (!RAW.length) throw new Error('Nenhuma linha encontrada.');
       dot.className  = 'status-dot';
       stxt.textContent = RAW.length + ' linhas · ' + new Date().toLocaleString('pt-BR');
       populateFilters();
@@ -1113,20 +1144,20 @@ function loadData() {
   };
 
   const s = document.createElement('script');
-  s.id  = 'jsonp-script';
-  s.src = API_URL + '?callback=__mqaCB&t=' + Date.now();
+  s.id  = 'gviz-script';
+  s.src = API_URL + '&tq=select+*&responseHandler=__gvizCB&t=' + Date.now();
   s.onerror = () => {
     clearTimeout(timer);
     dot.className = 'status-dot err';
     stxt.textContent = 'Erro ao carregar';
-    alert2('err', '✗ Falha ao carregar dados. Verifique o Apps Script.', 'load');
+    alert2('err', '✗ Falha ao carregar. Verifique se a planilha está pública.', 'load');
     $('loadingOverlay').style.display = 'none';
   };
   document.body.appendChild(s);
 }
 
 /* ── FILTER LISTENERS ── */
-['fFunil','fCampaign','fPeriod'].forEach(id => $(id).addEventListener('change', renderAll));
+['fProduto','fFunil','fCampaign','fPeriod'].forEach(id => $(id).addEventListener('change', renderAll));
 $('searchInput').addEventListener('input', renderAll);
 
 /* ── INIT ── */
