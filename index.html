@@ -645,11 +645,13 @@ function parseCSV(text) {
    FIELD MAP
 ═══════════════════════════════════════ */
 function mapRow(r) {
+  // Hook Rate, Hold Rate, CTR, LP View Rate vêm como decimal (0.63 = 63%)
+  const pct = v => num(v) * 100;
   return {
     date:          r['Date'] || r['Data'] || '',
     campaign:      r['Campaign Name'] || r['Campanha'] || '',
     ad_name:       r['Ad Name'] || r['Criativo'] || '',
-    funil:         r['Funnel'] || r['Funil'] || '',
+    funil:         r['Funil'] || r['Funnel'] || '',
     spend:         num(r['Amount Spent'] || r['Investido'] || 0),
     impressions:   num(r['Impressions'] || r['Impressões'] || 0),
     v3s:           num(r['3s Views'] || r['3 Segundos'] || 0),
@@ -663,14 +665,14 @@ function mapRow(r) {
     checkouts:     num(r['Checkouts'] || 0),
     purchases_meta:num(r['Purchases Meta'] || 0),
     purchases_hm:  num(r['Purchases Hotmart'] || r['Compras HM'] || 0),
-    revenue_hm:    num(r['Revenue Hotmart'] || r['Receita HM'] || 0),
-    hook_rate:     num(r['Hook Rate'] || 0),
-    hold_rate:     num(r['Hold Rate'] || 0),
-    ctr:           num(r['CTR'] || 0),
-    lp_view_rate:  num(r['LP View Rate'] || 0),
-    connect_rate:  num(r['Connect Rate'] || 0),
-    checkout_rate: num(r['Checkout Rate'] || 0),
-    purchase_rate: num(r['Purchase Rate Real'] || 0),
+    revenue_hm:    num(r['Revenue Hotmart'] || r['Revenue Hotmart'] || r['Receita HM'] || 0),
+    hook_rate:     pct(r['Hook Rate'] || 0),
+    hold_rate:     pct(r['Hold Rate'] || 0),
+    ctr:           pct(r['CTR'] || 0),
+    lp_view_rate:  pct(r['LP View Rate'] || 0),
+    connect_rate:  pct(r['Connect Rate'] || 0),
+    checkout_rate: pct(r['Checkout Rate'] || 0),
+    purchase_rate: pct(r['Purchase Rate Real'] || 0),
     cpa_real:      num(r['CPA Real'] || 0),
     roas_real:     num(r['ROAS Real'] || 0),
     tracking_gap:  num(r['Tracking Gap'] || 0),
