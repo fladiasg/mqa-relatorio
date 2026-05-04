@@ -1074,30 +1074,53 @@ function renderAll() {
 /* ═══════════════════════════════════════
    LOAD DATA
 ═══════════════════════════════════════ */
-async function loadData() {
+function loadData() {
   const dot  = $('statusDot');
   const stxt = $('statusText');
   dot.className = 'status-dot loading';
   stxt.textContent = 'Atualizando…';
-  try {
-    const r = await fetch(API_URL);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const json = await r.json();
-    if (json.error) throw new Error(json.error);
-    RAW = json.map(mapRow).filter(r => r.ad_name || r.campaign);
-    if (!RAW.length) throw new Error('Nenhuma linha encontrada na aba Base_Dashboard.');
-    dot.className  = 'status-dot';
-    stxt.textContent = `${RAW.length} linhas · ${new Date().toLocaleString('pt-BR')}`;
-    populateFilters();
-    renderAll();
-    alert2('ok', `✓ ${RAW.length} registros carregados.`, 'load');
-  } catch(e) {
-    dot.className  = 'status-dot err';
-    stxt.textContent = 'Erro: ' + e.message;
-    alert2('err', '✗ Falha ao carregar: ' + e.message, 'load');
-  } finally {
+
+  const old = document.getElementById('jsonp-script');
+  if (old) old.remove();
+
+  const timer = setTimeout(() => {
+    dot.className = 'status-dot err';
+    stxt.textContent = 'Erro: timeout';
+    alert2('err', '✗ Timeout. Verifique o Apps Script.', 'load');
     $('loadingOverlay').style.display = 'none';
-  }
+  }, 15000);
+
+  window.__mqaCB = function(json) {
+    clearTimeout(timer);
+    try {
+      if (json && json.error) throw new Error(json.error);
+      RAW = json.map(mapRow).filter(r => r.ad_name || r.campaign);
+      if (!RAW.length) throw new Error('Nenhuma linha encontrada na aba Base_Dashboard.');
+      dot.className  = 'status-dot';
+      stxt.textContent = RAW.length + ' linhas · ' + new Date().toLocaleString('pt-BR');
+      populateFilters();
+      renderAll();
+      alert2('ok', '✓ ' + RAW.length + ' registros carregados.', 'load');
+    } catch(e) {
+      dot.className = 'status-dot err';
+      stxt.textContent = 'Erro: ' + e.message;
+      alert2('err', '✗ Falha: ' + e.message, 'load');
+    } finally {
+      $('loadingOverlay').style.display = 'none';
+    }
+  };
+
+  const s = document.createElement('script');
+  s.id  = 'jsonp-script';
+  s.src = API_URL + '?callback=__mqaCB&t=' + Date.now();
+  s.onerror = () => {
+    clearTimeout(timer);
+    dot.className = 'status-dot err';
+    stxt.textContent = 'Erro ao carregar';
+    alert2('err', '✗ Falha ao carregar dados. Verifique o Apps Script.', 'load');
+    $('loadingOverlay').style.display = 'none';
+  };
+  document.body.appendChild(s);
 }
 
 /* ── FILTER LISTENERS ── */
